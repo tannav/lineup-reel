@@ -1,6 +1,7 @@
 # The Lineup Is's daily Instagram Reel: the day's card as a 9:16 video with its own generated
 # soundtrack, uploaded to the slate-card worker, which posts it. It follows the 1 PM ET card and
-# animates the same games. Needs the secret SLATE_CARD_REEL_SECRET.
+# animates the same games, then sends the same video to YouTube as a Short. Needs the secret
+# SLATE_CARD_REEL_SECRET; the Short also needs MAKE_YOUTUBE_WEBHOOK.
 name: Daily Reel
 
 on:
@@ -54,3 +55,10 @@ jobs:
         env:
           SLATE_CARD_REEL_SECRET: ${{ secrets.SLATE_CARD_REEL_SECRET }}
         run: node scripts/daily.mjs $FLAG
+      # The same video as a YouTube Short, through the Make.com uploader (see the README).
+      # Skips quietly until MAKE_YOUTUBE_WEBHOOK is set; never on a dry run.
+      - name: YouTube Short
+        if: steps.due.outputs.due == 'true' && inputs.mode != 'dry'
+        env:
+          MAKE_YOUTUBE_WEBHOOK: ${{ secrets.MAKE_YOUTUBE_WEBHOOK }}
+        run: node scripts/youtube.mjs
