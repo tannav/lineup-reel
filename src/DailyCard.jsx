@@ -39,13 +39,15 @@ export function timeline(weekday) {
 }
 
 // The card's sizes at 9:16, grown for fewer games; five rows keep a one-line read, and with one
-// or two games the matchup may take two lines instead of an ellipsis.
+// or two games the matchup may take two lines instead of an ellipsis. `whyChars` trims a read at
+// a word; `lines` is the hard cap, because capitals run wider than a character count expects and
+// an uncapped read can push the pane into the band Instagram covers.
 const sizeFor = (n) => ({
-  5: { disc: 76, rank: 66, matchup: 38, capsule: 23, why: 25, whyChars: 48, pad: 12 },
-  4: { disc: 84, rank: 72, matchup: 41, capsule: 24, why: 27, whyChars: 88, pad: 14 },
-  3: { disc: 100, rank: 82, matchup: 46, capsule: 26, why: 29, whyChars: 130, pad: 16 },
-  2: { disc: 112, rank: 92, matchup: 50, capsule: 28, why: 32, whyChars: 150, pad: 20, wrap: true },
-  1: { disc: 124, rank: 100, matchup: 54, capsule: 30, why: 36, whyChars: 220, pad: 0, wrap: true },
+  5: { disc: 76, rank: 66, matchup: 38, capsule: 23, why: 25, whyChars: 48, lines: 2, pad: 12 },
+  4: { disc: 84, rank: 72, matchup: 41, capsule: 24, why: 27, whyChars: 88, lines: 3, pad: 14 },
+  3: { disc: 100, rank: 82, matchup: 46, capsule: 26, why: 29, whyChars: 110, lines: 4, pad: 16 },
+  2: { disc: 112, rank: 92, matchup: 50, capsule: 28, why: 32, whyChars: 150, lines: 5, pad: 20, wrap: true },
+  1: { disc: 124, rank: 100, matchup: 54, capsule: 30, why: 36, whyChars: 220, lines: 8, pad: 0, wrap: true },
 }[Math.max(1, Math.min(5, n))]);
 
 const clamp = (t, max) => {
@@ -105,7 +107,7 @@ const Row = ({ row, s, at, first, beat }) => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0, flex: 1 }}>
         <div style={{ fontFamily: SANS, fontWeight: 600, fontSize: s.matchup, lineHeight: 1.15, color: WHITE, ...(s.wrap ? { textWrap: 'balance' } : { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }) }}>{row.matchup}</div>
         <Capsule capsule={row.capsule} size={s.capsule} beat={beat} />
-        {row.why ? <div style={{ fontFamily: SANS, fontSize: s.why, lineHeight: 1.3, color: 'rgba(255,255,255,.88)', opacity: read }}>{clamp(row.why, s.whyChars)}</div> : null}
+        {row.why ? <div style={{ fontFamily: SANS, fontSize: s.why, lineHeight: 1.3, color: 'rgba(255,255,255,.88)', opacity: read, display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: s.lines, overflow: 'hidden' }}>{clamp(row.why, s.whyChars)}</div> : null}
       </div>
     </div>
   );
