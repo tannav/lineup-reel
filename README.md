@@ -27,6 +27,20 @@ python3 scripts/music.py          # all seven soundtracks, to public/music/
 
 The workflow needs one secret, `SLATE_CARD_REEL_SECRET`, which the worker checks on upload. You can run it by hand from the Actions tab: `dry` renders and stores without posting, and `force` posts now. To stop the Reels, disable the workflow here or set `INSTAGRAM_REELS = "false"` on the worker. If GitHub ever pauses the schedule for inactivity, re-enable it from the Actions tab.
 
+## YouTube Shorts
+
+After the Reel is up, `scripts/youtube.mjs` sends the same video to YouTube as a Short, titled with the question people search ("Best games to watch tonight, Oct 12: Dodgers at Brewers"). The description lists the day's games and links the ranked slate. `node scripts/youtube.mjs --print` shows today's title and description without sending anything.
+
+YouTube locks every upload from an unaudited API project to Private, and a locked video can't be made public. Until our own Google Cloud project passes YouTube's API audit, the upload goes through a [Make.com](https://www.make.com) scenario that uses Make's own YouTube connection. To set it up (free plan, about 60 operations a month):
+
+1. Create a scenario. First module: **Webhooks → Custom webhook**. Copy its URL.
+2. Second module: **HTTP → Get a file**, URL = `video_url` from the webhook.
+3. Third module: **YouTube → Upload a Video**. Connect the @TheLineupIs channel with Make's default connection, not a custom OAuth client. Title = `title`, Description = `description`, file = the HTTP module's data, Privacy = Public, Made for kids = No, Category = Sports.
+4. Turn the scenario on, and save the webhook URL here as the repository secret `MAKE_YOUTUBE_WEBHOOK`.
+5. Test once: run the workflow with `force`, and check that the Short shows **Public** in YouTube Studio, not "Private (locked)". If it's locked, the connection isn't Make's own; reconnect it.
+
+Without the secret, the step logs that it skipped and the Reel is unaffected. Once the audit passes, this step can call the YouTube Data API directly instead.
+
 The serif is The Lineup Is's own typeface. It is loaded from the website at render time and is not part of this repository. Inter comes from Google Fonts.
 
 Remotion is used under its free license, which covers companies of up to three people.
