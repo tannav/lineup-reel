@@ -1,0 +1,20 @@
+{
+  "name": "lineup-reel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Renders The Lineup Is's daily Instagram Reel: the day's card building itself to a generated soundtrack.",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio src/index.js",
+    "music": "python3 scripts/music.py",
+    "daily": "node scripts/daily.mjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.534",
+    "@remotion/fonts": "4.0.534",
+    "@remotion/google-fonts": "4.0.534",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.534"
+  }
+}

@@ -1,0 +1,56 @@
+# The Lineup Is's daily Instagram Reel: the day's card as a 9:16 video with its own generated
+# soundtrack, uploaded to the slate-card worker, which posts it. It follows the 1 PM ET card and
+# animates the same games. Needs the secret SLATE_CARD_REEL_SECRET.
+name: Daily Reel
+
+on:
+  schedule:
+    # 1:05 PM Eastern: 17:05 UTC in EDT, 18:05 UTC in EST. Both fire; a run before the card or
+    # after the day's Reel is up stops at the check, before installing anything.
+    - cron: '5 17 * * *'
+    - cron: '5 18 * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: post (after the card, once a day), dry (render and store, no post), force (post now)
+        type: choice
+        default: post
+        options: [post, dry, force]
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: daily-reel
+  cancel-in-progress: false
+
+jobs:
+  reel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FLAG: ${{ (inputs.mode == 'dry' && '--dry') || (inputs.mode == 'force' && '--force') || '' }}
+    steps:
+      # GitHub switches off a public repository's schedule after 60 days without activity.
+      # Re-enabling the workflow on every run is the usual way to keep it on.
+      - name: Keep the schedule on
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/daily-reel.yml/enable"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - uses: actions/checkout@v4
+      - name: Is today's Reel due?
+        id: due
+        run: node scripts/daily.mjs --check $FLAG >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        if: steps.due.outputs.due == 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - if: steps.due.outputs.due == 'true'
+        run: npm ci && npx remotion browser ensure
+      - name: Render, upload, post
+        if: steps.due.outputs.due == 'true'
+        env:
+          SLATE_CARD_REEL_SECRET: ${{ secrets.SLATE_CARD_REEL_SECRET }}
+        run: node scripts/daily.mjs $FLAG
