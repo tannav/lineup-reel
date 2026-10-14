@@ -1,8 +1,8 @@
 // Today's card as a Reel, cut to the day's soundtrack (scripts/music.py, same tempo table): the
 // game count runs up over the intro bar, the games land on the beats of bar 2 (one chime each),
 // bars 3 and 4 hold the card, and bar 5 is the App Store card. The motion is the same every day;
-// the colours, the games, the tempo and the music change. Everything sits inside the Reels safe
-// area: the caption, the audio line and the buttons cover the bottom quarter and the lower right.
+// the colours, the games, the tempo and the music change. Everything sits in the band that every
+// way Instagram shows a Reel leaves clear (SAFE_TOP to SAFE_BOTTOM).
 import React from 'react';
 import { AbsoluteFill, Audio, Easing, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 import { loadFont } from '@remotion/fonts';
@@ -12,7 +12,12 @@ import { CUES } from './cues.js';
 
 export const FPS = 30;
 const PAD_X = 72;
-const TOP = 236;
+// Instagram shows this 1080x1920 video three ways. The Reels tab shows all of it, under its own
+// header (the top ~220 px) and over the caption, the audio line and the buttons (the bottom 440).
+// A feed post crops the middle 4:5 (rows 285-1635) and lays the name and "Original audio" over the
+// crop's top ~120 px. The profile grid crops the middle 3:4 (rows 240-1680). Only rows 420-1480
+// are clear in all three, so the content starts at SAFE_TOP and ends SAFE_BOTTOM from the bottom.
+const SAFE_TOP = 420;
 const SAFE_BOTTOM = 440;
 const WHITE = '#FFFFFF';
 const CREAM = '#F3D9B8';
@@ -41,12 +46,13 @@ export function timeline(weekday) {
 // The card's sizes at 9:16, grown for fewer games; five rows keep a one-line read, and with one
 // or two games the matchup may take two lines instead of an ellipsis. `whyChars` trims a read at
 // a word; `lines` is the hard cap, because capitals run wider than a character count expects and
-// an uncapped read can push the pane into the band Instagram covers.
+// an uncapped read can push the pane into the band Instagram covers. Each layout's worst case
+// (a long matchup, every read at its cap) fits between SAFE_TOP and SAFE_BOTTOM.
 const sizeFor = (n) => ({
-  5: { disc: 76, rank: 66, matchup: 38, capsule: 23, why: 25, whyChars: 48, lines: 2, pad: 12 },
-  4: { disc: 84, rank: 72, matchup: 41, capsule: 24, why: 27, whyChars: 88, lines: 3, pad: 14 },
-  3: { disc: 100, rank: 82, matchup: 46, capsule: 26, why: 29, whyChars: 110, lines: 4, pad: 16 },
-  2: { disc: 112, rank: 92, matchup: 50, capsule: 28, why: 32, whyChars: 150, lines: 5, pad: 20, wrap: true },
+  5: { disc: 76, rank: 66, matchup: 38, capsule: 23, why: 25, whyChars: 48, lines: 1, pad: 10 },
+  4: { disc: 84, rank: 72, matchup: 41, capsule: 24, why: 27, whyChars: 88, lines: 2, pad: 10 },
+  3: { disc: 100, rank: 82, matchup: 46, capsule: 26, why: 29, whyChars: 110, lines: 3, pad: 12 },
+  2: { disc: 112, rank: 92, matchup: 50, capsule: 28, why: 32, whyChars: 100, lines: 3, pad: 12, wrap: true },
   1: { disc: 124, rank: 100, matchup: 54, capsule: 30, why: 36, whyChars: 220, lines: 8, pad: 0, wrap: true },
 }[Math.max(1, Math.min(5, n))]);
 
@@ -129,11 +135,11 @@ const Headline = ({ headline, total, tl }) => {
   const counted = first.replace(/^\d[\d,]*/, (n) => Math.round(Number(n.replace(/,/g, '')) * run).toLocaleString('en-US'));
   const tuck = /^[.,;:!?]/.test(headline.trail);
   return (
-    <div style={{ fontFamily: SANS, fontWeight: 600, fontSize: 64, lineHeight: 1.22, letterSpacing: -0.8, color: WHITE }}>
+    <div style={{ fontFamily: SANS, fontWeight: 600, fontSize: 58, lineHeight: 1.22, letterSpacing: -0.8, color: WHITE }}>
       {first ? <div style={{ opacity: l1, transform: `translateY(${(1 - l1) * 50}px)`, fontVariantNumeric: 'tabular-nums' }}>{counted}</div> : null}
       <div style={{ opacity: l2, transform: `translateY(${(1 - l2) * 50}px)`, display: 'flex', flexWrap: 'wrap', alignItems: 'baseline' }}>
         <span style={{ whiteSpace: 'pre' }}>{rest}</span>
-        <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontWeight: 400, fontSize: 82, lineHeight: 1.2, letterSpacing: 0, display: 'inline-block', opacity: accent, transform: `scale(${0.82 + 0.18 * accent})`, transformOrigin: '50% 80%' }}>{headline.accent}</span>
+        <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontWeight: 400, fontSize: 74, lineHeight: 1.2, letterSpacing: 0, display: 'inline-block', opacity: accent, transform: `scale(${0.82 + 0.18 * accent})`, transformOrigin: '50% 80%' }}>{headline.accent}</span>
         <span style={{ marginLeft: tuck ? -2 : 14, opacity: accent }}>{headline.trail.trim()}</span>
       </div>
     </div>
@@ -149,10 +155,10 @@ const Card = (props) => {
   const pane = useArrive(tl.pane, { damping: 22 });
   const away = interpolate(frame, [tl.end - 2, tl.end + 10], [0, 1], hold);
   return (
-    <AbsoluteFill style={{ padding: `${TOP}px ${PAD_X}px ${SAFE_BOTTOM}px`, display: 'flex', flexDirection: 'column', filter: away ? `blur(${away * 16}px)` : undefined, opacity: 1 - 0.35 * away }}>
+    <AbsoluteFill style={{ padding: `${SAFE_TOP}px ${PAD_X}px ${SAFE_BOTTOM}px`, display: 'flex', flexDirection: 'column', filter: away ? `blur(${away * 16}px)` : undefined, opacity: 1 - 0.35 * away }}>
       <Headline headline={props.headline} total={props.total} tl={tl} />
-      <div style={{ fontFamily: SANS, fontWeight: 500, fontSize: 30, color: 'rgba(255,255,255,.86)', marginTop: 14, opacity: date }}>{props.dateLine}</div>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-around', marginTop: 40, padding: '14px 44px', borderRadius: 60, background: 'linear-gradient(180deg, rgba(28,18,12,.62), rgba(28,18,12,.40))', border: '2px solid rgba(255,255,255,.16)', boxShadow: '0 27px 55px rgba(0,0,0,.14)', opacity: pane, transform: `translateY(${(1 - pane) * 40}px) scale(${0.975 + 0.025 * pane})` }}>
+      <div style={{ fontFamily: SANS, fontWeight: 500, fontSize: 30, color: 'rgba(255,255,255,.86)', marginTop: 10, opacity: date }}>{props.dateLine}</div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-around', marginTop: 28, padding: '10px 44px', borderRadius: 60, background: 'linear-gradient(180deg, rgba(28,18,12,.62), rgba(28,18,12,.40))', border: '2px solid rgba(255,255,255,.16)', boxShadow: '0 27px 55px rgba(0,0,0,.14)', opacity: pane, transform: `translateY(${(1 - pane) * 40}px) scale(${0.975 + 0.025 * pane})` }}>
         {rows.map((r, i) => <Row key={r.rank} row={r} s={s} at={tl.row(i)} first={i === 0} beat={tl.beat} />)}
       </div>
     </AbsoluteFill>
@@ -167,7 +173,7 @@ const EndCard = ({ tl }) => {
   const store = useArrive(tl.end + 10);
   if (frame < tl.end - 2) return null;
   return (
-    <AbsoluteFill style={{ background: `rgba(28,18,12,${0.5 * dim})`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 34, paddingBottom: SAFE_BOTTOM - TOP }}>
+    <AbsoluteFill style={{ background: `rgba(28,18,12,${0.5 * dim})`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 34, paddingBottom: SAFE_BOTTOM - SAFE_TOP }}>
       <Img src={staticFile('icon.png')} style={{ width: 220, height: 220, borderRadius: 50, opacity: icon, transform: `scale(${0.7 + 0.3 * icon})`, boxShadow: '0 30px 60px rgba(0,0,0,.3)' }} />
       <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 112, lineHeight: 1.25, color: CREAM, opacity: words, transform: `translateY(${(1 - words) * 30}px)` }}>The Lineup Is</div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28, opacity: store, transform: `translateY(${(1 - store) * 30}px)` }}>
