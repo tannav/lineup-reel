@@ -12,7 +12,7 @@ Renders the daily Instagram Reel for [The Lineup Is](https://www.thelineup.is): 
   - Bars 3 and 4: the card holds.
   - Bar 5: the App Store card.
 
-  Everything stays inside the Reels safe area, clear of the caption and the buttons.
+  Everything stays in the band every view of a Reel leaves clear: under the Reels tab's header and above its caption and buttons, and inside the feed's 4:5 crop (below its name and audio line) and the profile grid's 3:4 crop.
 - `scripts/music.py`: the soundtrack, one piece per weekday. It uses the standard library only, so there's nothing to license. Tempo, key and chords come from `src/tracks.json`, which the video reads too, so the cuts land on the music.
 - `scripts/daily.mjs`: fetch, render, upload. `--check` says whether a run is due without installing anything.
 
